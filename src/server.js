@@ -1,10 +1,9 @@
 'use strict';
 
-const { createApp } = require('./app');
+const app = require('./app');
 const db = require('./db');
 
 const port = parseInt(process.env.PORT || '3000', 10);
-const app = createApp();
 const server = app.listen(port, '0.0.0.0', () => console.log(`PSYCHEARLY berjalan di port ${port} (${process.env.NODE_ENV || 'development'})`));
 
 function shutdown() {

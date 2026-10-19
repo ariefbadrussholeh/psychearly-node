@@ -146,4 +146,4 @@ function createApp() {
   return app;
 }
 
-module.exports = { createApp };
+module.exports = createApp();
