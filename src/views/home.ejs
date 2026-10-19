@@ -1,0 +1,70 @@
+<section class="pe-section pt-4 reveal">
+  <p class="pe-eyebrow mb-3">Community well-being early warning</p>
+  <h1 class="pe-narrow mx-0" style="max-width:48rem">Membaca perubahan tekanan di komunitas kampus sebelum membesar.</h1>
+  <p class="fs-5 text-secondary mt-4" style="max-width:40rem">
+    Mahasiswa mengisi check-in singkat dengan NIM setiap bulan. Sistem merangkum jawaban menjadi status per mahasiswa dan per komunitas
+    (GREEN, YELLOW, RED) secara otomatis, lalu menyiapkan rekomendasi tindakan untuk ditinjau pengelola. Status bukan diagnosis.
+  </p>
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <a class="btn btn-dark px-4" href="/checkin">Isi check-in bulan ini</a>
+    <a class="btn btn-outline-dark px-4" href="/dashboard">Buka dashboard pengelola</a>
+  </div>
+</section>
+
+<section class="pb-5 reveal">
+  <div class="pe-window">
+    <div class="pe-window__bar"><i></i><i></i><i></i></div>
+    <div class="row g-0">
+      <div class="col-md-4 p-4 border-end">
+        <p class="pe-eyebrow mb-2">Community risk status</p>
+        <div class="pe-status pe-status--YELLOW"><div class="pe-status__word"><span class="pe-status__dot"></span>Yellow</div></div>
+        <p class="small text-secondary mt-3 mb-0">Contoh ilustrasi. Bukan penilaian nyata.</p>
+      </div>
+      <div class="col-md-8 p-4">
+        <p class="pe-eyebrow mb-3">Indicator overview</p>
+        <div class="row g-3">
+          <% [['Stres', '2,4'], ['Tidur', '2,1'], ['Lelah', '2,0'], ['Sosial', '1,2'], ['Akademik', '2,6'], ['Fungsi', '1,5']].forEach(function (x) { %>
+            <div class="col-4"><div class="small text-secondary"><%= x[0] %></div><div class="pe-serif fs-3"><%= x[1] %> <span class="fs-6 text-secondary">/ 4</span></div></div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pe-section border-top">
+  <div class="row g-5">
+    <div class="col-lg-4 reveal">
+      <p class="pe-eyebrow mb-2">Alur</p>
+      <h2>Enam tahap, satu keputusan di tangan manusia.</h2>
+    </div>
+    <div class="col-lg-8">
+      <div class="row g-4 pe-steps-flow">
+        <%
+        var flow = [
+          ['Community check-in', 'Check-in dengan NIM sekitar satu menit, satu kali per bulan, dengan periode acuan 30 hari terakhir.'],
+          ['Data processing', 'Skor individu dan agregat komunitas dihitung otomatis. Skor I4 dibalik karena keterhubungan sosial adalah faktor protektif.'],
+          ['Pattern analysis', 'Perbandingan dengan bulan sebelumnya untuk melihat indikator yang memburuk.'],
+          ['Risk classification', 'Aturan awal menentukan GREEN, YELLOW, RED, atau INSUFFICIENT DATA untuk individu dan komunitas.'],
+          ['Preventive action', 'Setiap status terhubung ke kartu tindakan dan penanggung jawab.'],
+          ['Evaluation', 'Peninjauan dicatat, lalu dibandingkan pada check-in bulan berikutnya.']
+        ];
+        flow.forEach(function (f, i) { %>
+          <div class="col-md-6 reveal" style="--index:<%= i %>">
+            <div class="pe-card h-100 pe-card--hover"><h3 class="fs-4"><%= f[0] %></h3><p class="text-secondary mb-0"><%= f[1] %></p></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pb-5 reveal">
+  <div class="pe-card pe-card--soft">
+    <p class="pe-eyebrow mb-2">Batasan</p>
+    <p class="mb-0" style="max-width:46rem">
+      Ambang batas dan instrumen pada prototype ini bersifat sementara dan belum divalidasi. Sebelum dipakai di luar simulasi,
+      perlu validasi isi oleh psikolog dan konselor, pilot, kalibrasi ambang, evaluasi peringatan palsu, serta kajian privasi.
+    </p>
+  </div>
+</section>

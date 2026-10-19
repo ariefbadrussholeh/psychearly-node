@@ -1,0 +1,24 @@
+<div class="d-flex justify-content-between align-items-end mb-4">
+  <div><p class="pe-eyebrow mb-2">Pengaturan</p><h2 class="mb-0">Komunitas</h2></div>
+  <a class="btn btn-dark" href="/communities/new"><i class="ph-bold ph-plus me-1"></i>Tambah</a>
+</div>
+<p class="text-secondary" style="max-width:40rem">Kelompok agregasi, misalnya fakultas atau angkatan. Jumlah yang diundang dipakai untuk menghitung tingkat partisipasi.</p>
+<div class="pe-card p-2 p-md-4 reveal">
+  <div class="table-responsive">
+  <table class="table pe-table">
+    <thead><tr><th>Kode</th><th>Nama</th><th class="text-end">Diundang</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <% items.forEach(function (c) { %>
+      <tr>
+        <td class="pe-mono"><%= c.code %></td>
+        <td><%= c.name %></td>
+        <td class="text-end pe-mono"><%= c.invited_count %></td>
+        <td><% if (c.is_active) { %><span class="pe-badge pe-badge--green">Aktif</span><% } else { %><span class="pe-badge pe-badge--gray">Nonaktif</span><% } %></td>
+        <td class="text-end"><a href="/communities/<%= c.id %>/edit">Ubah</a></td>
+      </tr>
+    <% }) %>
+    <% if (!items.length) { %><tr><td colspan="5" class="text-secondary">Belum ada komunitas.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>

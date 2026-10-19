@@ -1,0 +1,54 @@
+<div class="pe-narrow" style="max-width:44rem">
+  <p class="pe-eyebrow mb-2">Check-in mahasiswa</p>
+  <h2 class="mb-3">Bagaimana 30 hari terakhirmu?</h2>
+
+  <p class="text-secondary">Periode <strong class="text-body"><%= periodLabel(periodCode) %></strong>, dibuka sampai <%= lastDay %> <%= periodLabel(periodCode) %>.
+     Sekitar satu menit. Satu NIM hanya bisa mengisi satu kali per bulan. Ini bukan tes psikologis.</p>
+
+  <form action="/checkin" method="post" class="mt-4" novalidate>
+    <%- csrfField() %>
+
+    <div class="row g-3 mb-5">
+      <div class="col-md-5">
+        <label class="form-label" for="nim">NIM</label>
+        <input class="form-control pe-mono" id="nim" name="nim" maxlength="24" autocomplete="off" inputmode="text" value="<%= old('nim') %>" required>
+      </div>
+      <div class="col-md-7">
+        <label class="form-label" for="community_id">Fakultas atau kelompok</label>
+        <select class="form-select" name="community_id" id="community_id" required>
+          <option value="">Pilih fakultas atau kelompok</option>
+          <% communities.forEach(function (c) { %>
+            <option value="<%= c.id %>" <%= String(old('community_id')) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+        <div class="form-text">Jika NIM sudah pernah terdaftar, fakultas yang tersimpan dipakai.</div>
+      </div>
+    </div>
+
+    <% Object.keys(cfg.indicators).forEach(function (id, idx) {
+         var ind = cfg.indicators[id]; var field = id.toLowerCase(); var labels = cfg.scales[ind.scale]; %>
+      <fieldset class="mb-5 reveal">
+        <legend class="fs-5 fw-medium mb-3" style="line-height:1.4"><span class="pe-mono text-secondary fs-6 me-2"><%= String(idx + 1).padStart(2, '0') %></span><%= ind.question %></legend>
+        <% if (ind.protective) { %>
+          <div class="d-flex justify-content-between small text-secondary mb-2">
+            <span>0 = <%= ind.low_label %></span><span>4 = <%= ind.high_label %></span>
+          </div>
+        <% } %>
+        <div class="pe-scale">
+          <% labels.forEach(function (label, v) { %>
+            <input class="btn-check" type="radio" name="<%= field %>" id="<%= field + '_' + v %>" value="<%= v %>" <%= String(old(field)) === String(v) ? 'checked' : '' %> required>
+            <label for="<%= field + '_' + v %>"><b><%= v %></b><span><%= label %></span></label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% }) %>
+
+    <div class="form-check mb-4">
+      <input class="form-check-input" type="checkbox" id="consent" name="consent" value="1" <%= old('consent') ? 'checked' : '' %> required>
+      <label class="form-check-label small" for="consent"><%= cfg.consentText %></label>
+    </div>
+
+    <div class="pe-note mb-4"><%= cfg.crisisNotice %></div>
+    <button class="btn btn-dark px-4" type="submit">Kirim check-in</button>
+  </form>
+</div>

@@ -1,0 +1,22 @@
+# Blueprint Render (opsional). Isi DATABASE_URL (string koneksi Supabase) di dashboard Render.
+services:
+  - type: web
+    name: psychearly
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run migrate && npm run seed:admin && npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true

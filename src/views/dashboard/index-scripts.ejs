@@ -1,0 +1,39 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var data = <%- jsonForScript(chart) %>;
+  var names = <%- jsonForScript(Object.fromEntries(Object.entries(cfg.indicators).map(function (e) { return [e[0], e[1].short]; }))) %>;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  Chart.defaults.font.family = "'Geist', system-ui, sans-serif";
+  Chart.defaults.color = '#6B7D8F';
+  Chart.defaults.animation = reduce ? false : { duration: 700 };
+
+  var grid = { color: '#E3EAEE', drawTicks: false };
+  var scale = { y: { min: 0, max: 4, grid: grid, border: { display: false }, ticks: { padding: 8, stepSize: 1 } },
+                x: { grid: { display: false }, border: { color: '#E3EAEE' }, ticks: { padding: 8 } } };
+  var line = function (label, values, color, extra) {
+    return Object.assign({ label: label, data: values, borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 3, pointHoverRadius: 4, tension: 0, spanGaps: false }, extra || {});
+  };
+
+  new Chart(document.getElementById('riskChart'), {
+    type: 'line',
+    data: { labels: data.labels, datasets: [
+      line('Skor risiko', data.risk, '#123D69'),
+      line('Batas GREEN (1,00)', data.labels.map(function () { return 1; }), '#346538', { borderDash: [4, 4], borderWidth: 1, pointRadius: 0 }),
+      line('Batas YELLOW (2,00)', data.labels.map(function () { return 2; }), '#9F2F2D', { borderDash: [4, 4], borderWidth: 1, pointRadius: 0 })
+    ] },
+    options: { maintainAspectRatio: false, scales: scale, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 2 } } } }
+  });
+
+  var colors = ['#123D69', '#2C91C9', '#956400', '#346538', '#9F2F2D', '#7B8FA1'];
+  var i = 0, sets = [];
+  Object.keys(data.indicators).forEach(function (id) {
+    sets.push(line(names[id], data.indicators[id], colors[i], { borderWidth: 1.5, pointRadius: 2, borderDash: i === 5 ? [2, 3] : [] }));
+    i++;
+  });
+  new Chart(document.getElementById('indChart'), {
+    type: 'line', data: { labels: data.labels, datasets: sets },
+    options: { maintainAspectRatio: false, scales: scale, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 2 } } } }
+  });
+})();
+</script>

@@ -1,0 +1,25 @@
+<% if (selected) { %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var data = <%- jsonForScript(chart) %>;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  Chart.defaults.font.family = "'Geist', system-ui, sans-serif";
+  Chart.defaults.color = '#6B7D8F';
+  Chart.defaults.animation = reduce ? false : { duration: 700 };
+  var ds = function (label, v, c, extra) { return Object.assign({ label: label, data: v, borderColor: c, backgroundColor: c, borderWidth: 2, pointRadius: 3, tension: 0 }, extra || {}); };
+  var flat = function (n) { return data.labels.map(function () { return n; }); };
+  new Chart(document.getElementById('personChart'), {
+    type: 'line',
+    data: { labels: data.labels, datasets: [
+      ds('Skor risiko', data.risk, '#123D69'),
+      ds('Batas GREEN (1,00)', flat(1), '#346538', { borderDash: [4, 4], borderWidth: 1, pointRadius: 0 }),
+      ds('Batas YELLOW (2,00)', flat(2), '#9F2F2D', { borderDash: [4, 4], borderWidth: 1, pointRadius: 0 })
+    ] },
+    options: { maintainAspectRatio: false,
+      scales: { y: { min: 0, max: 4, grid: { color: '#E3EAEE', drawTicks: false }, border: { display: false }, ticks: { padding: 8, stepSize: 1 } }, x: { grid: { display: false }, border: { color: '#E3EAEE' } } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 2 } } } }
+  });
+})();
+</script>
+<% } %>

@@ -1,0 +1,209 @@
+<%
+var a         = assessment;
+var status    = (a && a.risk_status) || 'INSUFFICIENT_DATA';
+var meta      = statusMeta(status);
+var action    = cfg.actions[status];
+var suffices  = a && status !== 'INSUFFICIENT_DATA';
+var scopeName = community ? community.name : 'Seluruh universitas';
+var invited   = community ? community.invited_count : communities.reduce(function (s, c) { return s + c.invited_count; }, 0);
+var dist      = distribution;
+var pct       = function (n) { return dist.total > 0 ? Math.round(n / dist.total * 100) : 0; };
+var indivUrl  = '/individuals?period=' + period.code + (community ? '&community=' + community.id : '');
+%>
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 reveal">
+  <div>
+    <p class="pe-eyebrow mb-2">University Community Well-being Dashboard <span class="pe-badge pe-badge--gray ms-2">Prototype</span></p>
+    <h2 class="mb-0"><%= scopeName %></h2>
+  </div>
+  <form method="get" action="/dashboard" class="d-flex flex-wrap gap-2">
+    <select class="form-select w-auto" name="community" aria-label="Cakupan" onchange="this.form.submit()">
+      <option value="">Seluruh universitas</option>
+      <% communities.forEach(function (c) { %>
+        <option value="<%= c.id %>" <%= community && c.id === community.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <select class="form-select w-auto" name="period" aria-label="Periode" onchange="this.form.submit()">
+      <% periods.forEach(function (p) { %>
+        <option value="<%= p.code %>" <%= p.code === period.code ? 'selected' : '' %>><%= periodLabel(p.code) %></option>
+      <% }) %>
+    </select>
+    <noscript><button class="btn btn-dark" type="submit">Tampilkan</button></noscript>
+  </form>
+</div>
+
+<!-- Ringkasan periode -->
+<div class="row g-3 mb-2">
+  <div class="col-6 col-lg-3 reveal" style="--index:0"><div class="pe-card py-3"><div class="pe-eyebrow mb-1">Check-in period</div><div class="fw-medium"><%= periodLabel(period.code) %><% if (isCurrent) { %> <span class="pe-badge pe-badge--blue ms-1">Berjalan</span><% } %></div></div></div>
+  <div class="col-6 col-lg-3 reveal" style="--index:1"><div class="pe-card py-3"><div class="pe-eyebrow mb-1">Valid responses</div><div class="fw-medium pe-mono"><%= (a && a.response_count) || 0 %> / <%= invited || '–' %></div></div></div>
+  <div class="col-6 col-lg-3 reveal" style="--index:2"><div class="pe-card py-3"><div class="pe-eyebrow mb-1">Participation</div><div class="fw-medium pe-mono"><%= pctFmt(a ? a.participation_rate : null) %></div></div></div>
+  <div class="col-6 col-lg-3 reveal" style="--index:3"><div class="pe-card py-3"><div class="pe-eyebrow mb-1">Konteks kalender</div><div class="fw-medium"><%= period.calendar_context || '–' %></div></div></div>
+</div>
+<details class="mb-4 small">
+  <summary class="text-secondary" style="cursor:pointer">Ubah konteks kalender akademik periode ini</summary>
+  <form method="post" action="/dashboard/context" class="d-flex gap-2 mt-2" style="max-width:34rem">
+    <%- csrfField() %>
+    <input type="hidden" name="period_id" value="<%= period.id %>">
+    <input class="form-control form-control-sm" name="calendar_context" maxlength="255" placeholder="Contoh: ujian tengah semester" value="<%= period.calendar_context || '' %>">
+    <button class="btn btn-outline-dark btn-sm" type="submit">Simpan</button>
+  </form>
+</details>
+<% if (isCurrent) { %><p class="small text-secondary mb-4">Bulan berjalan: angka diperbarui otomatis setiap ada check-in masuk dan dibekukan oleh pergantian bulan.</p><% } %>
+
+<!-- Status dan tindakan -->
+<div class="row g-3 mb-3">
+  <div class="col-lg-5 reveal">
+    <div class="pe-card h-100">
+      <p class="pe-eyebrow mb-3">Community risk status</p>
+      <div class="pe-status pe-status--<%= status %>">
+        <div class="pe-status__word"><span class="pe-status__dot"></span><%= status === 'INSUFFICIENT_DATA' ? 'Data kurang' : ucfirstLower(status) %></div>
+        <div><%- statusBadge(status) %> <span class="ms-1"><%= meta.label %></span></div>
+        <p class="text-secondary mb-0"><%= meta.text %></p>
+      </div>
+      <hr class="my-4" style="border-color:var(--pe-border);opacity:1">
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Skor risiko komunitas</span><span class="pe-mono fw-medium"><%= scoreFmt(a ? a.risk_score : null) %> / 4</span></div>
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Tren</span><span><i class="ph-bold <%= trendIcon((a && a.trend_status) || 'UNAVAILABLE') %> me-1"></i><%= trendLabel((a && a.trend_status) || 'UNAVAILABLE') %></span></div>
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Indikator naik ≥ 0,5 / ≥ 1,0</span><span class="pe-mono"><%= (a && a.worsening05) || 0 %> / <%= (a && a.worsening10) || 0 %></span></div>
+      <% if (community) { %>
+        <div class="d-flex justify-content-between small"><span class="text-secondary">Peninjauan</span><span><%= reviewLabel((a && a.review_status) || 'PENDING') %></span></div>
+      <% } %>
+      <% if (reasons.length) { %>
+        <div class="pe-note mt-4"><% reasons.forEach(function (r) { %><div><%= r %></div><% }) %></div>
+      <% } %>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <% if (community && a) { %>
+          <a class="btn btn-dark btn-sm" href="/assessments/<%= a.id %>">Tinjau dan catat tindakan</a>
+        <% } else { %>
+          <span class="small text-secondary">Gambaran gabungan seluruh komunitas aktif. Peninjauan dicatat per komunitas: pilih komunitas di atas.</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7 reveal" style="--index:1">
+    <div class="pe-card h-100">
+      <p class="pe-eyebrow mb-3">Recommended action</p>
+      <h3><%= action.title %></h3>
+      <p class="text-secondary"><span class="text-body fw-medium">Penanggung jawab:</span> <%= action.owner %></p>
+      <ul class="pe-steps">
+        <% action.steps.forEach(function (s) { %><li><i class="ph-bold ph-arrow-right"></i><span><%= s %></span></li><% }) %>
+      </ul>
+      <% if (status === 'RED') { %>
+        <div class="pe-note mt-3">Status RED adalah permintaan peninjauan manusia, bukan bukti gangguan mental dan tidak boleh memicu diagnosis, sanksi akademik, atau tindakan terhadap individu.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Sebaran individu -->
+<div class="pe-card mb-3 reveal">
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+      <p class="pe-eyebrow mb-1">Sebaran status individu</p>
+      <div class="small text-secondary"><%= dist.total %> mahasiswa mengisi check-in, <%= periodLabel(period.code) %></div>
+    </div>
+    <a class="btn btn-outline-dark btn-sm" href="<%= indivUrl %>">Lihat daftar individu</a>
+  </div>
+  <% if (dist.total > 0) { %>
+    <div class="pe-dist mb-3" role="img" aria-label="Sebaran status individu">
+      <span class="pe-dist__seg pe-dist__seg--green" style="width:<%= pct(dist.GREEN) %>%"></span><span class="pe-dist__seg pe-dist__seg--yellow" style="width:<%= pct(dist.YELLOW) %>%"></span><span class="pe-dist__seg pe-dist__seg--red" style="width:<%= pct(dist.RED) %>%"></span>
+    </div>
+  <% } %>
+  <div class="row g-3">
+    <% ['GREEN', 'YELLOW', 'RED'].forEach(function (st) { %>
+      <div class="col-4">
+        <a class="text-decoration-none d-block" href="<%= indivUrl + '&status=' + st %>">
+          <%- statusBadge(st) %>
+          <div class="pe-serif fs-2 mt-2"><%= dist[st] %></div>
+          <div class="small text-secondary"><%= pct(dist[st]) %>% dari yang mengisi</div>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+  <p class="small text-secondary mt-3 mb-0">Status individu memakai ambang yang sama (0 sampai 4). Ini hasil rule-based dari satu check-in, bukan diagnosis.</p>
+</div>
+
+<!-- Indikator -->
+<p class="pe-eyebrow mt-5 mb-3 reveal">Indicator overview</p>
+<div class="row g-3 mb-3">
+  <% Object.keys(indicators).forEach(function (id, i) { var ind = indicators[id]; var d = ind.delta; %>
+    <div class="col-6 col-lg-4 reveal" style="--index:<%= i %>">
+      <div class="pe-card pe-ind h-100 pe-card--hover">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="small"><%= ind.name %></span>
+          <span class="pe-mono small text-secondary"><%= id %></span>
+        </div>
+        <div class="pe-ind__score"><%= suffices ? scoreFmt(ind.score) : '–' %><span class="fs-6 text-secondary"> / 4</span></div>
+        <div class="pe-ind__bar"><span style="width:<%= suffices && ind.score !== null ? Math.min(100, (Number(ind.score) / 4) * 100) : 0 %>%"></span></div>
+        <div class="d-flex justify-content-between mt-2">
+          <span class="pe-delta <%= d !== null && d >= 0.5 ? 'pe-delta--up' : (d !== null && d <= -0.5 ? 'pe-delta--down' : '') %>">
+            <%= suffices && d !== null ? ((d > 0 ? '+' : '') + numberFmt(d, 2)) + ' vs bulan lalu' : 'tanpa pembanding' %>
+          </span>
+          <% if (ind.protective) { %><span class="pe-delta" title="Skor dibalik: makin rendah keterhubungan, makin tinggi risiko">dibalik</span><% } %>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<p class="small text-secondary">Semua skor dan klasifikasi adalah ilustrasi prototype, bukan temuan yang tervalidasi. Skala 0 (risiko terendah) sampai 4.</p>
+
+<!-- Tren -->
+<div class="row g-3 mt-4">
+  <div class="col-lg-6 reveal"><div class="pe-card"><p class="pe-eyebrow mb-3">Community risk score</p><div style="position:relative;height:260px"><canvas id="riskChart" aria-label="Grafik skor risiko per bulan" role="img"></canvas></div></div></div>
+  <div class="col-lg-6 reveal" style="--index:1"><div class="pe-card"><p class="pe-eyebrow mb-3">Indicator trend</p><div style="position:relative;height:260px"><canvas id="indChart" aria-label="Grafik tren enam indikator per bulan" role="img"></canvas></div></div></div>
+</div>
+
+<!-- Riwayat status -->
+<p class="pe-eyebrow mt-5 mb-3 reveal">Risk status history</p>
+<div class="pe-card p-2 p-md-4 reveal">
+  <div class="table-responsive">
+  <table class="table pe-table">
+    <thead><tr><th>Periode</th><th>Konteks</th><th>Status</th><th class="text-end">Skor</th><th>Tren</th><% if (community) { %><th>Peninjauan dan tindakan</th><% } %></tr></thead>
+    <tbody>
+    <% history.forEach(function (h) { %>
+      <tr>
+        <td class="text-nowrap">
+          <% if (community && h.id) { %><a href="/assessments/<%= h.id %>"><%= periodLabel(h.period_code) %></a>
+          <% } else { %><a href="/dashboard?period=<%= h.period_code %>"><%= periodLabel(h.period_code) %></a><% } %>
+        </td>
+        <td class="text-secondary small"><%= h.calendar_context || '–' %></td>
+        <td><%- statusBadge(h.risk_status) %></td>
+        <td class="text-end pe-mono"><%= scoreFmt(h.risk_score) %></td>
+        <td class="small"><i class="ph-bold <%= trendIcon(h.trend_status) %> me-1"></i><%= trendLabel(h.trend_status) %></td>
+        <% if (community) { %><td class="small"><%= reviewLabel(h.review_status) %><%= h.responsible_unit ? ' · ' + h.responsible_unit : '' %></td><% } %>
+      </tr>
+    <% }) %>
+    <% if (!history.length) { %><tr><td colspan="6" class="text-secondary">Belum ada riwayat penilaian.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- Semua komunitas pada periode ini -->
+<p class="pe-eyebrow mt-5 mb-3 reveal">Semua komunitas, <%= periodLabel(period.code) %></p>
+<div class="pe-card p-2 p-md-4 reveal">
+  <div class="table-responsive">
+  <table class="table pe-table">
+    <thead><tr><th>Komunitas</th><th>Status</th><th class="text-end">Skor</th><th class="text-end">Respons</th><th class="text-end">Partisipasi</th><th>Peninjauan</th></tr></thead>
+    <tbody>
+    <% overview.forEach(function (o) { %>
+      <tr>
+        <td><a href="/dashboard?community=<%= o.community_id %>&period=<%= period.code %>"><%= o.community_name %></a></td>
+        <td><%- statusBadge(o.risk_status) %></td>
+        <td class="text-end pe-mono"><%= scoreFmt(o.risk_score) %></td>
+        <td class="text-end pe-mono"><%= o.response_count %></td>
+        <td class="text-end pe-mono"><%= pctFmt(o.participation_rate) %></td>
+        <td class="small"><%= reviewLabel(o.review_status) %></td>
+      </tr>
+    <% }) %>
+    <% if (!overview.length) { %><tr><td colspan="6" class="text-secondary">Belum ada penilaian pada periode ini.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<% if (!isProd) { %>
+  <form method="post" action="/dashboard/demo" class="mt-4" data-confirm="Ini menghapus seluruh data lalu mengisi data simulasi. Lanjutkan?">
+    <%- csrfField() %><button class="btn-link-quiet" type="submit"><i class="ph-bold ph-database me-1"></i>Muat ulang data demo (hanya development)</button>
+  </form>
+<% } %>

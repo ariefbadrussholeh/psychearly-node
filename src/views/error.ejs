@@ -1,0 +1,10 @@
+<div class="mx-auto reveal" style="max-width:40rem; padding-top:3rem">
+  <p class="pe-eyebrow mb-2">Kesalahan <%= code %></p>
+  <h2 class="mb-3"><%= title %></h2>
+  <% if (code === 500 && !isProd) { %>
+    <pre class="small" style="white-space:pre-wrap"><%= message %></pre>
+  <% } else { %>
+    <p class="text-secondary"><%= message %></p>
+  <% } %>
+  <a class="btn btn-outline-dark mt-3" href="/">Kembali ke beranda</a>
+</div>

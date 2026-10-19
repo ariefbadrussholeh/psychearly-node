@@ -1,0 +1,17 @@
+<div class="mx-auto reveal" style="max-width:26rem; padding-top:3rem">
+  <p class="pe-eyebrow mb-2">Pengelola</p>
+  <h2 class="mb-4">Masuk ke dashboard</h2>
+  <form action="/login" method="post" class="pe-card" novalidate>
+    <%- csrfField() %>
+    <div class="mb-3">
+      <label class="form-label" for="email">Email</label>
+      <input class="form-control" type="email" id="email" name="email" value="<%= old('email') %>" autocomplete="username" required autofocus>
+    </div>
+    <div class="mb-4">
+      <label class="form-label" for="password">Kata sandi</label>
+      <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-dark w-100" type="submit">Masuk</button>
+  </form>
+  <p class="small text-secondary mt-3">Hanya untuk pengelola kemahasiswaan. Mahasiswa mengisi check-in tanpa akun.</p>
+</div>

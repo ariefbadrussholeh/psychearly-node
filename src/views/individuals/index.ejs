@@ -1,0 +1,98 @@
+<%
+var dist = distribution;
+var pct  = function (n) { return dist.total > 0 ? Math.round(n / dist.total * 100) : 0; };
+// Bangun query string; nilai null/'' dibuang. over menimpa filter aktif.
+var qs = function (over) {
+  var p = { period: period.code, community: communityId || null, status: status || null, q: q || null };
+  Object.keys(over || {}).forEach(function (k) { p[k] = over[k]; });
+  return Object.keys(p).filter(function (k) { return p[k] !== null && p[k] !== undefined && p[k] !== ''; })
+    .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(p[k]); }).join('&');
+};
+%>
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 reveal">
+  <div>
+    <p class="pe-eyebrow mb-2">Monitoring individu</p>
+    <h2 class="mb-0">Status check-in per mahasiswa</h2>
+  </div>
+</div>
+<p class="text-secondary" style="max-width:44rem">Data berisi identitas mahasiswa dan hanya untuk pengelola yang berwenang. Status adalah hasil rule-based dari satu check-in, bukan diagnosis, dan tidak boleh dipakai untuk sanksi akademik.</p>
+
+<!-- Sebaran -->
+<div class="row g-3 mb-4">
+  <% ['GREEN', 'YELLOW', 'RED'].forEach(function (st, i) { %>
+    <div class="col-6 col-lg-3 reveal" style="--index:<%= i %>">
+      <a class="pe-card pe-card--hover py-3 d-block text-decoration-none" href="?<%= qs({ status: st, page: null }) %>">
+        <%- statusBadge(st) %>
+        <div class="pe-serif fs-2 mt-2"><%= dist[st] %></div>
+        <div class="small text-secondary"><%= pct(dist[st]) %>% dari yang mengisi</div>
+      </a>
+    </div>
+  <% }) %>
+  <div class="col-6 col-lg-3 reveal" style="--index:3">
+    <a class="pe-card pe-card--hover py-3 d-block text-decoration-none" href="?<%= qs({ status: null, page: null }) %>">
+      <span class="pe-badge pe-badge--blue">TOTAL</span>
+      <div class="pe-serif fs-2 mt-2"><%= dist.total %></div>
+      <div class="small text-secondary"><%= periodLabel(period.code) %></div>
+    </a>
+  </div>
+</div>
+
+<!-- Filter -->
+<form method="get" action="/individuals" class="row g-2 mb-4 reveal">
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="period" aria-label="Periode" onchange="this.form.submit()">
+      <% periods.forEach(function (p) { %><option value="<%= p.code %>" <%= p.code === period.code ? 'selected' : '' %>><%= periodLabel(p.code) %></option><% }) %>
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="community" aria-label="Fakultas" onchange="this.form.submit()">
+      <option value="">Semua fakultas</option>
+      <% communities.forEach(function (c) { %><option value="<%= c.id %>" <%= c.id === communityId ? 'selected' : '' %>><%= c.name %></option><% }) %>
+    </select>
+  </div>
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="status" aria-label="Status" onchange="this.form.submit()">
+      <option value="">Semua status</option>
+      <% ['GREEN', 'YELLOW', 'RED'].forEach(function (st) { %><option value="<%= st %>" <%= status === st ? 'selected' : '' %>><%= st %></option><% }) %>
+    </select>
+  </div>
+  <div class="col-6 col-md-3"><input class="form-control" type="search" name="q" value="<%= q %>" placeholder="Cari NIM atau nama" aria-label="Cari NIM atau nama"></div>
+  <div class="col-12 col-md-2 d-grid"><button class="btn btn-dark" type="submit">Terapkan</button></div>
+</form>
+
+<div class="pe-card p-2 p-md-4 reveal">
+  <div class="table-responsive">
+  <table class="table pe-table">
+    <thead><tr><th>NIM</th><th>Nama</th><th>Fakultas</th><th class="text-end">Skor</th><th>Status</th><th>vs bulan lalu</th><th></th></tr></thead>
+    <tbody>
+    <% rows.forEach(function (r) { %>
+      <tr>
+        <td class="pe-mono"><%= r.nim %></td>
+        <td><% if (r.name) { %><%= r.name %><% } else { %><span class="text-secondary">–</span><% } %></td>
+        <td class="small text-secondary"><%= r.community_name %></td>
+        <td class="text-end pe-mono"><%= scoreFmt(r.score) %></td>
+        <td><%- statusBadge(r.status) %></td>
+        <td class="small">
+          <% if (r.delta !== null) { %>
+            <span class="pe-delta <%= r.trend === 'WORSENING' ? 'pe-delta--up' : (r.trend === 'IMPROVING' ? 'pe-delta--down' : '') %>"><i class="ph-bold <%= trendIcon(r.trend) %> me-1"></i><%= (r.delta > 0 ? '+' : '') + numberFmt(r.delta, 2) %></span>
+          <% } else { %><span class="text-secondary">–</span><% } %>
+        </td>
+        <td class="text-end"><a href="/individuals/<%= r.student_id %>">Detail</a></td>
+      </tr>
+    <% }) %>
+    <% if (!rows.length) { %><tr><td colspan="7" class="text-secondary">Tidak ada check-in yang cocok dengan filter.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+  <% if (pages > 1) { %>
+    <div class="d-flex justify-content-between align-items-center pt-3 px-2 small">
+      <span class="text-secondary">Halaman <%= page %> dari <%= pages %> · <%= total %> mahasiswa</span>
+      <span class="d-flex gap-3">
+        <% if (page > 1) { %><a href="?<%= qs({ page: page - 1 }) %>">Sebelumnya</a><% } %>
+        <% if (page < pages) { %><a href="?<%= qs({ page: page + 1 }) %>">Berikutnya</a><% } %>
+      </span>
+    </div>
+  <% } %>
+</div>
+<p class="small text-secondary mt-3">Diurutkan dari skor risiko tertinggi. Kolom "vs bulan lalu" membandingkan skor risiko dengan check-in bulan kalender sebelumnya. Tanda panah muncul bila selisih ≥ <%= numberFmt(cfg.individualTrendDelta, 2) %> poin.</p>

@@ -1,0 +1,57 @@
+<% var status = assessment.risk_status; var action = cfg.actions[status]; %>
+
+<a class="btn-link-quiet d-inline-block mb-3" href="/dashboard?community=<%= community.id %>&period=<%= period.code %>"><i class="ph-bold ph-arrow-left me-1"></i>Kembali ke dashboard</a>
+
+<div class="reveal mb-4">
+  <p class="pe-eyebrow mb-2">Peninjauan penilaian</p>
+  <h2 class="mb-2"><%= community.name %>, <%= periodLabel(period.code) %></h2>
+  <div><%- statusBadge(status, true) %></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6 reveal">
+    <div class="pe-card h-100">
+      <p class="pe-eyebrow mb-3">Dasar klasifikasi</p>
+      <% reasons.forEach(function (r) { %><p class="mb-2"><%= r %></p><% }) %>
+      <table class="table pe-table mt-3">
+        <thead><tr><th>Indikator</th><th class="text-end">Respons</th><th class="text-end">Skor risiko</th></tr></thead>
+        <tbody>
+        <% Object.keys(cfg.indicators).forEach(function (id) { var ind = cfg.indicators[id]; var s = stats[id] || null; %>
+          <tr><td><%= ind.name %> <span class="pe-mono small text-secondary"><%= id %></span></td>
+              <td class="text-end pe-mono"><%= s ? s.response_count : 0 %></td>
+              <td class="text-end pe-mono"><%= scoreFmt(s ? s.community_score : null) %></td></tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <div class="d-flex justify-content-between small mt-3"><span class="text-secondary">Skor risiko komunitas</span><span class="pe-mono"><%= scoreFmt(assessment.risk_score) %> / 4</span></div>
+      <div class="d-flex justify-content-between small"><span class="text-secondary">Partisipasi</span><span class="pe-mono"><%= assessment.response_count %> respons, <%= pctFmt(assessment.participation_rate) %></span></div>
+      <div class="pe-note mt-4">Ambang batas bersifat sementara dan belum divalidasi. Tinjau konteks dan kualitas data sebelum mengambil tindakan.</div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 reveal" style="--index:1">
+    <div class="pe-card mb-3">
+      <p class="pe-eyebrow mb-2">Saran tindakan</p>
+      <h3 class="fs-4"><%= action.title %></h3>
+      <p class="small text-secondary">Penanggung jawab: <%= action.owner %></p>
+      <ul class="pe-steps mb-0"><% action.steps.forEach(function (s) { %><li><i class="ph-bold ph-arrow-right"></i><span><%= s %></span></li><% }) %></ul>
+    </div>
+
+    <form class="pe-card" method="post" action="/assessments/<%= assessment.id %>/review">
+      <%- csrfField() %>
+      <p class="pe-eyebrow mb-3">Catatan peninjauan manusia</p>
+      <div class="mb-3"><label class="form-label" for="review_status">Status peninjauan</label>
+        <select class="form-select" id="review_status" name="review_status">
+          <% ['PENDING', 'REVIEWED', 'ACTION_PLANNED'].forEach(function (s) { %>
+            <option value="<%= s %>" <%= old('review_status', assessment.review_status) === s ? 'selected' : '' %>><%= reviewLabel(s) %></option>
+          <% }) %>
+        </select></div>
+      <div class="mb-3"><label class="form-label" for="responsible_unit">Unit penanggung jawab</label>
+        <input class="form-control" id="responsible_unit" name="responsible_unit" maxlength="160" value="<%= old('responsible_unit', assessment.responsible_unit || '') %>"></div>
+      <div class="mb-3"><label class="form-label" for="review_note">Catatan dan rencana tindak lanjut</label>
+        <textarea class="form-control" id="review_note" name="review_note" rows="4" maxlength="2000"><%= old('review_note', assessment.review_note || '') %></textarea></div>
+      <% if (assessment.reviewed_at) { %><p class="small text-secondary">Terakhir ditinjau <%= dateTime(assessment.reviewed_at) %> WIB.</p><% } %>
+      <button class="btn btn-dark" type="submit">Simpan peninjauan</button>
+    </form>
+  </div>
+</div>

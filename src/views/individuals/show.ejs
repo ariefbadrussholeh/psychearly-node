@@ -1,0 +1,83 @@
+<% var sel = selected; var action = sel ? cfg.individualActions[sel.status] : null; %>
+
+<a class="btn-link-quiet d-inline-block mb-3" href="/individuals<%= sel ? '?period=' + sel.period_code : '' %>"><i class="ph-bold ph-arrow-left me-1"></i>Kembali ke daftar individu</a>
+
+<div class="reveal mb-4">
+  <p class="pe-eyebrow mb-2">Detail individu</p>
+  <h2 class="mb-2"><%= student.name || ('NIM ' + student.nim) %></h2>
+  <div class="text-secondary"><% if (student.name) { %><span class="pe-mono"><%= student.nim %></span> · <% } %><%= student.community_name %></div>
+</div>
+
+<% if (!sel) { %>
+  <div class="pe-card"><p class="mb-0 text-secondary">Belum ada check-in untuk mahasiswa ini.</p></div>
+<% } else { %>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-5 reveal">
+    <div class="pe-card h-100">
+      <p class="pe-eyebrow mb-3">Status check-in, <%= periodLabel(sel.period_code) %></p>
+      <div class="pe-status pe-status--<%= sel.status %>">
+        <div class="pe-status__word"><span class="pe-status__dot"></span><%= ucfirstLower(sel.status) %></div>
+        <div><%- statusBadge(sel.status, true) %></div>
+      </div>
+      <hr class="my-4" style="border-color:var(--pe-border);opacity:1">
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Skor risiko</span><span class="pe-mono fw-medium"><%= scoreFmt(sel.score) %> / 4</span></div>
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Jumlah skor (maks. 24)</span><span class="pe-mono"><%= sel.sum %></span></div>
+      <div class="d-flex justify-content-between small mb-2"><span class="text-secondary">Tren vs bulan lalu</span><span><i class="ph-bold <%= trendIcon(sel.trend) %> me-1"></i><%= trendLabel(sel.trend) %></span></div>
+      <div class="d-flex justify-content-between small"><span class="text-secondary">Diisi pada</span><span class="pe-mono"><%= dateTime(sel.submitted_at) %></span></div>
+    </div>
+  </div>
+  <div class="col-lg-7 reveal" style="--index:1">
+    <div class="pe-card h-100">
+      <p class="pe-eyebrow mb-3">Saran tindak lanjut</p>
+      <h3><%= action.title %></h3>
+      <ul class="pe-steps">
+        <% action.steps.forEach(function (s) { %><li><i class="ph-bold ph-arrow-right"></i><span><%= s %></span></li><% }) %>
+      </ul>
+      <div class="pe-note mt-3">Hasil rule-based dari jawaban satu bulan. Bukan diagnosis dan tidak boleh memicu sanksi akademik. Teks tindak lanjut ini draf dan perlu ditinjau konselor atau psikolog.</div>
+    </div>
+  </div>
+</div>
+
+<p class="pe-eyebrow mt-5 mb-3 reveal">Indikator, <%= periodLabel(sel.period_code) %></p>
+<div class="row g-3 mb-3">
+  <% Object.keys(cfg.indicators).forEach(function (id, i) {
+       var ind = cfg.indicators[id];
+       var v = sel.indicators[id];
+       var d = sel.prev_indicators ? v - sel.prev_indicators[id] : null; %>
+    <div class="col-6 col-lg-4 reveal" style="--index:<%= i %>">
+      <div class="pe-card pe-ind h-100 pe-card--hover">
+        <div class="d-flex justify-content-between align-items-start mb-2"><span class="small"><%= ind.name %></span><span class="pe-mono small text-secondary"><%= id %></span></div>
+        <div class="pe-ind__score"><%= v %><span class="fs-6 text-secondary"> / 4</span></div>
+        <div class="pe-ind__bar"><span style="width:<%= (v / 4) * 100 %>%"></span></div>
+        <div class="d-flex justify-content-between mt-2">
+          <span class="pe-delta <%= d !== null && d >= 1 ? 'pe-delta--up' : (d !== null && d <= -1 ? 'pe-delta--down' : '') %>"><%= d !== null ? ((d > 0 ? '+' : '') + d) + ' vs bulan lalu' : 'tanpa pembanding' %></span>
+          <% if (ind.protective) { %><span class="pe-delta" title="Skor dibalik">dibalik</span><% } %>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<div class="row g-3 mt-4">
+  <div class="col-lg-6 reveal"><div class="pe-card"><p class="pe-eyebrow mb-3">Skor risiko per bulan</p><div style="position:relative;height:240px"><canvas id="personChart" aria-label="Grafik skor risiko individu per bulan" role="img"></canvas></div></div></div>
+  <div class="col-lg-6 reveal" style="--index:1">
+    <div class="pe-card p-2 p-md-4">
+      <p class="pe-eyebrow mb-2 px-2">Riwayat</p>
+      <table class="table pe-table">
+        <thead><tr><th>Periode</th><th class="text-end">Skor</th><th>Status</th><th>Tren</th></tr></thead>
+        <tbody>
+        <% history.forEach(function (h) { %>
+          <tr>
+            <td><a href="/individuals/<%= student.id %>?period=<%= h.period_code %>"><%= periodLabel(h.period_code) %></a></td>
+            <td class="text-end pe-mono"><%= scoreFmt(h.score) %></td>
+            <td><%- statusBadge(h.status) %></td>
+            <td class="small"><i class="ph-bold <%= trendIcon(h.trend) %> me-1"></i><%= trendLabel(h.trend) %></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>
